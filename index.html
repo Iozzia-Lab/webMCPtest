@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
@@ -79,7 +79,9 @@
     // =========================================================================
     // @mcp-b/global polyfill — provides navigator.modelContext
     // =========================================================================
-    import 'https://esm.sh/@mcp-b/global';
+    // Polyfill disabled — using native navigator.modelContext from chrome://flags/#enable-webmcp-testing
+    // import 'https://esm.sh/@mcp-b/global';
+    // To use polyfill instead, uncomment the line above (requires compatible @mcp-b/global version)
 
     // =========================================================================
     // Logging helpers

@@ -1,4 +1,5 @@
-﻿node_modules/
+node_modules/
 .DS_Store
+.claude/
 git_err.txt
 git_out.txt
