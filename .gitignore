@@ -1,2 +1,4 @@
 ﻿node_modules/
 .DS_Store
+git_err.txt
+git_out.txt
