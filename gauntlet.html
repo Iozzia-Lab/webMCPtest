@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebMCP UI Gauntlet</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface-hover: #232736;
+      --border: #2a2e3a;
+      --text: #e4e6eb;
+      --text-muted: #8b8fa3;
+      --accent: #6c63ff;
+      --accent-dim: rgba(108, 99, 255, 0.15);
+      --success: #34d399;
+      --success-dim: rgba(52, 211, 153, 0.15);
+      --warning: #fbbf24;
+      --warning-dim: rgba(251, 191, 36, 0.15);
+      --error: #f87171;
+      --error-dim: rgba(248, 113, 113, 0.15);
+      --info: #60a5fa;
+      --info-dim: rgba(96, 165, 250, 0.15);
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+    [data-theme="light"] {
+      --bg: #f5f5f7; --surface: #ffffff; --surface-hover: #f0f0f2;
+      --border: #e0e0e4; --text: #1a1d27; --text-muted: #6b7085;
+      --accent: #5a52e0; --accent-dim: rgba(90, 82, 224, 0.1);
+      --success-dim: rgba(52, 211, 153, 0.1); --error-dim: rgba(248, 113, 113, 0.1);
+      --warning-dim: rgba(251, 191, 36, 0.1); --info-dim: rgba(96, 165, 250, 0.1);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+
+    /* Header */
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
+    header h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; }
+    header h1 span { color: var(--accent); }
+    .status-badge { display: flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 500; background: var(--success-dim); color: var(--success); }
+    .status-badge.error { background: var(--error-dim); color: var(--error); }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    /* Section layout */
+    .sections { display: flex; flex-direction: column; gap: 1.5rem; }
+    .section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .section-header { padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
+    .section-header h2 { font-size: 0.9rem; font-weight: 600; }
+    .section-header .badge { font-size: 0.65rem; padding: 0.2rem 0.5rem; border-radius: 10px; background: var(--accent-dim); color: var(--accent); font-weight: 500; }
+    .section-body { padding: 1.25rem; }
+    .section-body.collapsed { display: none; }
+
+    /* Form elements */
+    label { display: block; font-size: 0.8rem; font-weight: 500; margin-bottom: 0.3rem; color: var(--text-muted); }
+    input[type="text"], input[type="email"], input[type="number"], input[type="date"], input[type="search"],
+    textarea, select {
+      width: 100%; padding: 0.5rem 0.75rem; background: var(--bg); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text); font-size: 0.85rem; font-family: inherit;
+      transition: border-color 0.2s;
+    }
+    input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); }
+    textarea { min-height: 80px; resize: vertical; }
+    select { cursor: pointer; }
+
+    /* Grid helpers */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+    .flex-row { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+    .flex-col { display: flex; flex-direction: column; gap: 0.75rem; }
+    .gap-sm { gap: 0.5rem; }
+
+    /* Buttons */
+    .btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.85rem; border: 1px solid transparent; border-radius: var(--radius-sm); cursor: pointer; font-size: 0.8rem; font-weight: 500; font-family: inherit; transition: all 0.2s; }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-secondary { background: var(--accent-dim); color: var(--accent); }
+    .btn-secondary:hover { background: var(--accent); color: white; }
+    .btn-success { background: var(--success-dim); color: var(--success); }
+    .btn-success:hover { background: var(--success); color: white; }
+    .btn-danger { background: var(--error-dim); color: var(--error); }
+    .btn-danger:hover { background: var(--error); color: white; }
+    .btn-warning { background: var(--warning-dim); color: var(--warning); }
+    .btn-warning:hover { background: var(--warning); color: #000; }
+    .btn-sm { padding: 0.3rem 0.6rem; font-size: 0.7rem; }
+    .btn-icon { padding: 0.35rem; min-width: 28px; justify-content: center; }
+
+    /* Checkbox & Radio */
+    .check-group, .radio-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    .check-item, .radio-item { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.85rem; }
+    .check-item input, .radio-item input { accent-color: var(--accent); width: 16px; height: 16px; cursor: pointer; }
+
+    /* Toggle switch */
+    .toggle-wrap { display: flex; align-items: center; gap: 0.6rem; font-size: 0.85rem; }
+    .toggle { position: relative; width: 40px; height: 22px; cursor: pointer; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle .slider { position: absolute; inset: 0; background: var(--border); border-radius: 22px; transition: 0.3s; }
+    .toggle .slider::before { content: ''; position: absolute; height: 16px; width: 16px; left: 3px; bottom: 3px; background: var(--text); border-radius: 50%; transition: 0.3s; }
+    .toggle input:checked + .slider { background: var(--accent); }
+    .toggle input:checked + .slider::before { transform: translateX(18px); background: white; }
+
+    /* Range slider */
+    .range-wrap { display: flex; align-items: center; gap: 0.75rem; }
+    .range-wrap input[type="range"] { flex: 1; accent-color: var(--accent); }
+    .range-value { font-size: 0.8rem; font-weight: 600; min-width: 30px; text-align: center; color: var(--accent); }
+
+    /* Tabs */
+    .tab-bar { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1rem; }
+    .tab-btn { padding: 0.5rem 1rem; font-size: 0.8rem; font-weight: 500; cursor: pointer; border: none; background: none; color: var(--text-muted); border-bottom: 2px solid transparent; font-family: inherit; transition: all 0.2s; }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-btn:hover { color: var(--text); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* Data grid */
+    .data-grid { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    .data-grid th, .data-grid td { padding: 0.5rem 0.75rem; text-align: left; border-bottom: 1px solid var(--border); }
+    .data-grid th { font-weight: 600; color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .data-grid tr:hover td { background: var(--surface-hover); }
+    .data-grid .actions { display: flex; gap: 0.3rem; }
+
+    /* Alerts */
+    .alert { padding: 0.65rem 1rem; border-radius: var(--radius-sm); font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center; }
+    .alert-info { background: var(--info-dim); color: var(--info); border: 1px solid rgba(96, 165, 250, 0.3); }
+    .alert-success { background: var(--success-dim); color: var(--success); border: 1px solid rgba(52, 211, 153, 0.3); }
+    .alert-warning { background: var(--warning-dim); color: var(--warning); border: 1px solid rgba(251, 191, 36, 0.3); }
+    .alert-error { background: var(--error-dim); color: var(--error); border: 1px solid rgba(248, 113, 113, 0.3); }
+    .alert .close-btn { background: none; border: none; color: inherit; cursor: pointer; font-size: 1rem; opacity: 0.7; }
+    .alert .close-btn:hover { opacity: 1; }
+
+    /* Toast container */
+    #toast-container { position: fixed; top: 1rem; right: 1rem; z-index: 10000; display: flex; flex-direction: column; gap: 0.5rem; pointer-events: none; }
+    .toast { padding: 0.6rem 1rem; border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 500; box-shadow: 0 4px 20px rgba(0,0,0,0.3); animation: toastIn 0.3s ease-out, toastOut 0.3s ease-in 2.7s forwards; pointer-events: auto; }
+    .toast-success { background: var(--success); color: white; }
+    .toast-error { background: var(--error); color: white; }
+    .toast-warning { background: var(--warning); color: #000; }
+    .toast-info { background: var(--info); color: white; }
+    @keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-10px); } }
+
+    /* Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(2px); }
+    .modal-overlay.active { display: flex; }
+    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); width: 90%; max-width: 480px; box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--border); }
+    .modal-header h3 { font-size: 0.9rem; }
+    .modal-body { padding: 1.25rem; font-size: 0.85rem; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 0.5rem; padding: 0.75rem 1.25rem; border-top: 1px solid var(--border); }
+    .modal-overlay.stacked { z-index: 1001; }
+    .modal-overlay.stacked .modal { max-width: 400px; }
+
+    /* Accordion */
+    .accordion-item { border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
+    .accordion-item + .accordion-item { margin-top: 0.5rem; }
+    .accordion-trigger { width: 100%; padding: 0.65rem 1rem; background: var(--surface-hover); border: none; color: var(--text); font-size: 0.85rem; font-weight: 500; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-family: inherit; }
+    .accordion-trigger:hover { background: var(--border); }
+    .accordion-trigger .arrow { transition: transform 0.2s; }
+    .accordion-trigger.open .arrow { transform: rotate(180deg); }
+    .accordion-content { padding: 0.75rem 1rem; font-size: 0.8rem; color: var(--text-muted); display: none; }
+    .accordion-content.open { display: block; }
+
+    /* Drag list */
+    .drag-list { list-style: none; display: flex; flex-direction: column; gap: 0.35rem; }
+    .drag-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; background: var(--surface-hover); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.8rem; cursor: grab; transition: all 0.15s; }
+    .drag-item:active { cursor: grabbing; }
+    .drag-item.dragging { opacity: 0.5; border-color: var(--accent); }
+    .drag-item.drag-over { border-color: var(--accent); background: var(--accent-dim); }
+    .drag-handle { color: var(--text-muted); font-size: 0.7rem; }
+
+    /* Autocomplete */
+    .autocomplete-wrap { position: relative; }
+    .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); max-height: 180px; overflow-y: auto; z-index: 100; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+    .autocomplete-list.open { display: block; }
+    .autocomplete-item { padding: 0.45rem 0.75rem; font-size: 0.8rem; cursor: pointer; }
+    .autocomplete-item:hover, .autocomplete-item.highlighted { background: var(--accent-dim); color: var(--accent); }
+
+    /* Pagination */
+    .pagination { display: flex; align-items: center; gap: 0.3rem; }
+    .page-btn { min-width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text-muted); cursor: pointer; font-size: 0.75rem; font-family: inherit; transition: all 0.2s; }
+    .page-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .page-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .page-btn:disabled { opacity: 0.3; cursor: default; }
+
+    /* Stepper */
+    .stepper-bar { display: flex; align-items: center; gap: 0; margin-bottom: 1.25rem; }
+    .step-indicator { display: flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; color: var(--text-muted); }
+    .step-indicator.active { color: var(--accent); font-weight: 600; }
+    .step-indicator.completed { color: var(--success); }
+    .step-num { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid var(--border); font-size: 0.65rem; font-weight: 700; }
+    .step-indicator.active .step-num { border-color: var(--accent); background: var(--accent-dim); }
+    .step-indicator.completed .step-num { border-color: var(--success); background: var(--success-dim); }
+    .step-line { flex: 1; height: 2px; background: var(--border); margin: 0 0.5rem; }
+    .step-line.completed { background: var(--success); }
+    .step-content { display: none; }
+    .step-content.active { display: block; }
+
+    /* Tooltip */
+    .tooltip-wrap { position: relative; display: inline-block; }
+    .tooltip-wrap .tooltip-text { visibility: hidden; position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 0.3rem 0.6rem; border-radius: 6px; font-size: 0.7rem; white-space: nowrap; z-index: 50; opacity: 0; transition: opacity 0.2s; }
+    .tooltip-wrap:hover .tooltip-text { visibility: visible; opacity: 1; }
+
+    /* Context menu */
+    .context-area { padding: 2rem; border: 2px dashed var(--border); border-radius: var(--radius-sm); text-align: center; color: var(--text-muted); font-size: 0.8rem; cursor: context-menu; }
+    .context-menu { position: fixed; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); box-shadow: 0 4px 16px rgba(0,0,0,0.3); z-index: 5000; display: none; min-width: 160px; padding: 0.3rem; }
+    .context-menu.open { display: block; }
+    .context-menu-item { padding: 0.4rem 0.75rem; font-size: 0.8rem; cursor: pointer; border-radius: 4px; display: flex; align-items: center; gap: 0.5rem; }
+    .context-menu-item:hover { background: var(--accent-dim); color: var(--accent); }
+    .context-menu-divider { height: 1px; background: var(--border); margin: 0.25rem 0; }
+
+    /* Dropdown menu */
+    .dropdown { position: relative; display: inline-block; }
+    .dropdown-menu { position: absolute; top: 100%; right: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); box-shadow: 0 4px 16px rgba(0,0,0,0.3); z-index: 200; display: none; min-width: 180px; padding: 0.3rem; margin-top: 0.25rem; }
+    .dropdown-menu.open { display: block; }
+    .dropdown-menu-item { padding: 0.4rem 0.75rem; font-size: 0.8rem; cursor: pointer; border-radius: 4px; }
+    .dropdown-menu-item:hover { background: var(--accent-dim); color: var(--accent); }
+
+    /* File upload */
+    .file-drop { border: 2px dashed var(--border); border-radius: var(--radius-sm); padding: 2rem; text-align: center; cursor: pointer; transition: all 0.2s; }
+    .file-drop:hover, .file-drop.dragover { border-color: var(--accent); background: var(--accent-dim); }
+    .file-drop p { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem; }
+    .file-drop .icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .file-list { margin-top: 0.75rem; }
+    .file-item { display: flex; align-items: center; justify-content: space-between; padding: 0.35rem 0.5rem; font-size: 0.8rem; background: var(--surface-hover); border-radius: 4px; margin-top: 0.3rem; }
+
+    /* Confirm dialog */
+    .confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 2000; display: none; justify-content: center; align-items: center; }
+    .confirm-overlay.active { display: flex; }
+    .confirm-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; max-width: 360px; text-align: center; }
+    .confirm-box h3 { font-size: 0.95rem; margin-bottom: 0.5rem; }
+    .confirm-box p { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem; }
+    .confirm-actions { display: flex; justify-content: center; gap: 0.5rem; }
+
+    /* Log panel */
+    .log-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-top: 1.5rem; }
+    .log-header { display: flex; justify-content: space-between; padding: 0.65rem 1rem; border-bottom: 1px solid var(--border); font-size: 0.8rem; font-weight: 600; }
+    .log-header button { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.7rem; font-family: inherit; }
+    .log-entries { max-height: 250px; overflow-y: auto; padding: 0.5rem; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.7rem; line-height: 1.7; }
+    .log-entry { padding: 0.15rem 0.4rem; border-radius: 3px; white-space: pre-wrap; word-break: break-all; }
+    .log-entry.call { color: var(--accent); }
+    .log-entry.result { color: var(--success); }
+    .log-entry.error { color: var(--error); }
+    .log-entry .ts { color: var(--text-muted); margin-right: 0.4rem; }
+    .log-empty { text-align: center; padding: 1.5rem; color: var(--text-muted); font-size: 0.8rem; font-family: inherit; }
+
+    footer { margin-top: 1.5rem; padding-top: 0.75rem; border-top: 1px solid var(--border); text-align: center; font-size: 0.7rem; color: var(--text-muted); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1><span>WebMCP</span> UI Gauntlet</h1>
+      <nav style="margin-top:0.25rem"><a href="index.html" style="color:#6c63ff;font-size:0.8rem;text-decoration:none;font-weight:500;">&#x2190; Test Dashboard</a></nav>
+      <div id="status" class="status-badge error"><div class="status-dot"></div><span>Checking...</span></div>
+    </header>
+
+    <div class="sections">
+
+      <!-- 1. TEXT INPUTS & TEXTAREA -->
+      <div class="section">
+        <div class="section-header" onclick="toggleSection(this)">
+          <h2>Text Inputs & Textarea</h2><span class="badge">5 fields</span>
+        </div>
+        <div class="section-body">
+          <div class="grid-2">
+            <div><label for="inp-name">Name</label><input type="text" id="inp-name" placeholder="Enter your name"></div>
+            <div><label for="inp-email">Email</label><input type="email" id="inp-email" placeholder="you@example.com"></div>
+            <div><label for="inp-number">Quantity</label><input type="number" id="inp-number" placeholder="0" min="0" max="100"></div>
+            <div><label for="inp-date">Date</label><input type="date" id="inp-date"></div>
+          </div>
+          <div style="margin-top:0.75rem"><label for="inp-textarea">Message</label><textarea id="inp-textarea" placeholder="Type a message here..."></textarea></div>
+          <div style="margin-top:0.75rem"><button class="btn btn-primary" onclick="submitTextInputs()">Submit Fields</button></div>
+        </div>
+      </div>
+
+      <!-- 2. SELECTS -->
+      <div class="section">
+        <div class="section-header" onclick="toggleSection(this)">
+          <h2>Select Dropdowns</h2><span class="badge">3 selects</span>
+        </div>
+        <div class="section-body">
+          <div class="grid-3">
+            <div>
+              <label for="sel-single">Single Select</label>
+              <select id="sel-single">
+                <option value="">Choose an option...</option>
+                <option value="pizza">Pizza</option>
+                <option value="pasta">Pasta</option>
+                <option value="salad">Salad</option>
+                <option value="dessert">Dessert</option>
+              </select>
+            </div>
+            <div>
+              <label for="sel-multi">Multi Select (Ctrl+Click)</label>
+              <select id="sel-multi" multiple size="4">
+                <option value="cheese">Extra Cheese</option>
+                <option value="mushrooms">Mushrooms</option>
+                <option value="olives">Olives</option>
+                <option value="peppers">Peppers</option>
+                <option value="onions">Onions</option>
+              </select>
+            </div>
+            <div>
+              <label for="sel-grouped">Grouped Select</label>
+              <select id="sel-grouped">
+                <option value="">Choose...</option>
+                <optgroup label="Mains">
+                  <option value="burger">Burger</option>
+                  <option value="steak">Steak</option>
+                </optgroup>
+                <optgroup label="Drinks">
+                  <option value="water">Water</option>
+                  <option value="soda">Soda</option>
+                  <option value="juice">Juice</option>
+                </optgroup>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top:0.75rem"><button class="btn btn-primary" onclick="submitSelects()">Submit Selections</button></div>
+        </div>
+      </div>
+
+      <!-- 3. CHECKBOXES & RADIOS -->
+      <div class="section">
+        <div class="section-header" onclick="toggleSection(this)">
+          <h2>Checkboxes & Radio Buttons</h2><span class="badge">2 groups</span>
+        </div>
+        <div class="section-body">
+          <div class="grid-2">
+            <div>
+              <label>Toppings (Checkboxes)</label>
+              <div class="check-group" id="chk-group">
+                <label class="check-item"><input type="checkbox" name="topping" value="cheese"> Extra Cheese</label>
+                <label class="check-item"><input type="checkbox" name="topping" value="bacon"> Bacon</label>
+                <label class="check-item"><input type="checkbox" name="topping" value="mushrooms"> Mushrooms</label>
+                <label class="check-item"><input type="checkbox" name="topping" value="jalapeños"> Jalapeños</label>
+                <label class="check-item"><input type="checkbox" name="topping" value="pineapple"> Pineapple</label>
+              </div>
+            </div>
+            <div>
+              <label>Size (Radio Buttons)</label>
+              <div class="radio-group" id="radio-group">
+                <label class="radio-item"><input type="radio" name="size" value="small"> Small (8")</label>
+                <label class="radio-item"><input type="radio" name="size" value="medium"> Medium (12")</label>
+                <label class="radio-item"><input type="radio" name="size" value="large" checked> Large (16")</label>
+                <label class="radio-item"><input type="radio" name="size" value="xl"> XL (20")</label>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:0.75rem"><button class="btn btn-primary" onclick="submitCheckRadio()">Submit Choices</button></div>
+        </div>
+      </div>
+
+      <!-- 4. TOGGLES & RANGE -->
+      <div class="section">
+        <div class="section-header" onclick="toggleSection(this)">
+          <h2>Toggles & Range Slider</h2><span class="badge">4 controls</span>
+        </div>
+        <div class="section-body">
+          <div class="grid-2">
+            <div class="flex-col">
+              <div class="toggle-wrap"><label class="toggle"><input type="checkbox" id="tgl-notifications" checked><span class="slider"></span></label> Notifications</div>
+              <div class="toggle-wrap"><label class="toggle"><input type="checkbox" id="tgl-darkmode"><span class="slider"></span></label> Dark Mode</div>
+              <div class="toggle-wrap"><label class="toggle"><input type="checkbox" id="tgl-sound"><span class="slider"></span></label> Sound Effects</div>
+            </div>
+            <div>
+              <label>Spice Level</label>
+              <div class="range-wrap">
+                <span style="font-size:0.75rem">Mild</span>
+                <input type="range" id="range-spice" min="0" max="10" value="5" oninput="document.getElementById('range-val').textContent=this.value">
+                <span style="font-size:0.75rem">Hot</span>
+                <span class="range-value" id="range-val">5</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. TABS -->
+      <div class="section">
+        <div class="section-header" onclick="toggleSection(this)">
+          <h2>Tabs</h2><span class="badge">3 tabs</span>
+        </div>
+        <div class="section-body">
+          <div class="tab-bar">
+            <button class="tab-btn active" onclick="switchTab('tab-overview', this)">Overview</button>
+            <button class="tab-btn" onclick="switchTab('tab-details', this)">Details</button>
+            <button class="tab-btn" onclick="switchTab('tab-reviews', this)">Reviews</button>
+          </div>
+          <div id="tab-overview" class="tab-panel active">
+            <p style="font-size:0.85rem">Welcome to the overview tab. This shows a summary of the current item with key highlights and quick stats.</p>
+          </div>
+          <div id="tab-details" class="tab-panel">
+            <p style="font-size:0.85rem">Detailed specifications: Weight 450g, Dimensions 30x20x5cm, Material: Stainless Steel, Origin: Italy.</p>
+          </div>
+          <div id="tab-reviews" class="tab-panel">
+            <p style="font-size:0.85rem">★★★★☆ (4.2/5) — 128 reviews. "Excellent quality!" — "Fast delivery." — "Would recommend."</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6. DATA GRID -->
+      <div class="section">
+        <div class="section-header" onclick="toggleSection(this)">
+          <h2>Data Grid with Actions</h2><span class="badge">CRUD</span>
+        </div>
+        <div class="section-body" style="overflow-x:auto">
+          <table class="data-grid" id="data-grid">
+            <thead>
+              <tr><th>ID</th><th>Name</th><th>Category</th><th>Price</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="grid-body"></tbody>
+          </table>
+          <div style="margin-top:0.75rem; display:flex; justify-content:space-between; align-items:center;">
+            <button class="btn btn-success btn-sm" onclick="addGridItem()">+ Add Item</button>
+            <div class="pagination" id="grid-pagination"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 7. ALERTS -->
+      <div class="section">
+        <div class="section-header" onclick="toggleSection(this)">
+          <h2>Alerts</h2><span class="badge">4 types</span>
+        </div>
+        <div class="section-body flex-col">
+          <div class="alert alert-info"><span>ℹ️ This is an informational alert with some helpful context.</span><button class="close-btn" onclick="this.parentElement.remove()">×</button></div>
+          <div class="alert alert-success"><span>✓ Operation completed successfully. Your changes have been saved.</span><button class="close-btn" onclick="this.parentElement.remove()">×</button></div>
+          <div class="alert alert-warning"><span>⚠ Warning: Your session will expire in 5 minutes.</span><button class="close-btn" onclick="this.parentElement.remove()">×</button></div>
+          <div class="alert alert-error"><span>✕ Error: Failed to load resource. Please try again.</span><button class="close-btn" onclick="this.parentElement.remove()">×</button></div>
+        </div>
+      </div>
+
+      <!-- 8. TOASTS -->
+      <div class="section">
+        <div class="section-header" onclick="toggleSection(this)">
+          <h2>Toast Notifications</h2><span class="badge">4 types</span>
+        </div>
+        <div class="section-body flex-row">
+          <button class="btn btn-success btn-sm" onclick="showToast('success','Item saved successfully!')">Success Toast</button>
+          <button class="btn btn-danger btn-sm" onclick="showToast('error','Failed to delete item.')">Error Toast</button>
+          <button class="btn btn-warning btn-sm" onclick="showToast('warning','Connection unstable.')">Warning Toast</button>
+          <button class="btn btn-secondary btn-sm" onclick="showToast('info','New update available.')">Info Toast</button>
+        </div>
+      </div>
+
+      <!-- 9. MODALS -->
+      <div class="section">
+        <div class="section-header" onclick="toggleSection(this)">
+          <h2>Modals & Stacked Modals</h2><span class="badge">2 layers</span>
+        </div>
+        <div class="section-body flex-row">
+          <button class="btn btn-primary" onclick="openModal('modal-1')">Open Modal</button>
+          <button class="btn btn-secondary" onclick="openModal('modal-edit')">Open Edit Modal</button>
+        </div>
+      </div>
+
+      <!-- 10. ACCORDION -->
+      <div class="section">
+        <div class="section-header" onclick="toggleSection(this)">
+          <h2>Accordion / Collapsible</h2><span class="badge">3 items</span>
+        </div>
+        <div class="section-body">
+          <div class="accordion-item">
+            <button class="accordion-trigger" onclick="toggleAccordion(this)">What is WebMCP? <span class="arrow">▼</span></button>
+            <div class="accordion-content">WebMCP is a browser-native standard that lets websites expose structured, callable tools to AI agents through navigator.modelContext.</div>
+          </div>
+          <div class="accordion-item">
+            <button class="accordion-trigger" onclick="toggleAccordion(this)">How do I register a tool? <span class="arrow">▼</span></button>
+            <div class="accordion-content">Call navigator.modelContext.registerTool() with an object containing name, description, inputSchema, and an async execute function.</div>
+          </div>
+          <div class="accordion-item">
+            <button class="accordion-trigger" onclick="toggleAccordion(this)">Which browsers support it? <span class="arrow">▼</span></button>
+            <div class="accordion-content">Currently Chrome Canary 146+ with the WebMCP flag enabled. Firefox and Safari are participating in the W3C working group but haven't shipped yet.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 11. DRAG & DROP REORDER -->
+      <div class="section">
+        <div class="section-header" onclick="toggleSection(this)">
+          <h2>Drag & Drop Reorder</h2><span class="badge">sortable</span>
+        </div>
+        <div class="section-body">
+          <ul class="drag-list" id="drag-list">
+            <li class="drag-item" draggable="true"><span class="drag-handle">⠿</span> 1. Receive Order</li>
+            <li class="drag-item" draggable="true"><span class="drag-handle">⠿</span> 2. Prepare Food</li>
+            <li class="drag-item" draggable="true"><span class="drag-handle">⠿</span> 3. Quality Check</li>
+            <li class="drag-item" draggable="true"><span class="drag-handle">⠿</span> 4. Package Order</li>
+            <li class="drag-item" draggable="true"><span class="drag-handle">⠿</span> 5. Dispatch Delivery</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 12. SEARCH WITH AUTOCOMPLETE -->
+      <div class="section">
+        <div class="section-header" onclick="toggleSection(this)">
+          <h2>Search with Autocomplete</h2><span class="badge">filter</span>
+        </div>
+        <div class="section-body">
+          <div class="autocomplete-wrap">
+            <label for="search-auto">Search Menu Items</label>
+            <input type="search" id="search-auto" placeholder="Type to search..." oninput="handleAutocomplete(this.value)" onfocus="handleAutocomplete(this.value)" autocomplete="off">
+            <div class="autocomplete-list" id="autocomplete-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 13. STEPPER / WIZARD -->
+      <div class="section">
+        <div class="section-header" onclick="toggleSection(this)">
+          <h2>Multi-Step Wizard</h2><span class="badge">3 steps</span>
+        </div>
+        <div class="section-body">
+          <div class="stepper-bar" id="stepper-bar"></div>
+          <div id="step-1" class="step-content active">
+            <p style="font-size:0.85rem; margin-bottom:0.75rem"><strong>Step 1:</strong> Choose your base</p>
+            <div class="radio-group">
+              <label class="radio-item"><input type="radio" name="base" value="classic" checked> Classic Dough</label>
+              <label class="radio-item"><input type="radio" name="base" value="thin"> Thin Crust</label>
+              <label class="radio-item"><input type="radio" name="base" value="stuffed"> Stuffed Crust</label>
+            </div>
+          </div>
+          <div id="step-2" class="step-content">
+            <p style="font-size:0.85rem; margin-bottom:0.75rem"><strong>Step 2:</strong> Pick your sauce</p>
+            <div class="radio-group">
+              <label class="radio-item"><input type="radio" name="sauce" value="tomato" checked> Tomato</label>
+              <label class="radio-item"><input type="radio" name="sauce" value="bbq"> BBQ</label>
+              <label class="radio-item"><input type="radio" name="sauce" value="pesto"> Pesto</label>
+            </div>
+          </div>
+          <div id="step-3" class="step-content">
+            <p style="font-size:0.85rem; margin-bottom:0.75rem"><strong>Step 3:</strong> Confirm your order</p>
+            <p style="font-size:0.8rem; color: var(--text-muted);" id="wizard-summary">Review your selections...</p>
+          </div>
+          <div style="margin-top:1rem; display:flex; justify-content:space-between;">
+            <button class="btn btn-secondary" id="step-prev" onclick="stepperNav(-1)" disabled>← Previous</button>
+            <button class="btn btn-primary" id="step-next" onclick="stepperNav(1)">Next →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 14. TOOLTIPS -->
+      <div class="section">
+        <div class="section-header" onclick="toggleSection(this)">
+          <h2>Tooltips</h2><span class="badge">hover</span>
+        </div>
+        <div class="section-body flex-row" style="gap:1.5rem">
+          <div class="tooltip-wrap"><button class="btn btn-secondary">Hover Me</button><span class="tooltip-text">This is a tooltip!</span></div>
+          <div class="tooltip-wrap"><button class="btn btn-success">Save</button><span class="tooltip-text">Save your changes (Ctrl+S)</span></div>
+          <div class="tooltip-wrap"><button class="btn btn-danger">Delete</button><span class="tooltip-text">Permanently remove this item</span></div>
+          <div class="tooltip-wrap"><button class="btn btn-warning">⚠ Caution</button><span class="tooltip-text">This action cannot be undone</span></div>
+        </div>
+      </div>
+
+      <!-- 15. CONTEXT MENU -->
+      <div class="section">
+        <div class="section-header" onclick="toggleSection(this)">
+          <h2>Context Menu (Right-Click)</h2><span class="badge">custom</span>
+        </div>
+        <div class="section-body">
+          <div class="context-area" id="context-area" oncontextmenu="showContextMenu(event)">
+            Right-click anywhere in this area to open the custom context menu
+          </div>
+        </div>
+      </div>
+
+      <!-- 16. DROPDOWN MENU -->
+      <div class="section">
+        <div class="section-header" onclick="toggleSection(this)">
+          <h2>Dropdown Menu</h2><span class="badge">nested</span>
+        </div>
+        <div class="section-body flex-row">
+          <div class="dropdown">
+            <button class="btn btn-primary" onclick="toggleDropdown('dd-actions')">Actions ▾</button>
+            <div class="dropdown-menu" id="dd-actions">
+              <div class="dropdown-menu-item" onclick="showToast('info','Edit clicked'); closeDropdowns()">✏️ Edit</div>
+              <div class="dropdown-menu-item" onclick="showToast('info','Duplicate clicked'); closeDropdowns()">📋 Duplicate</div>
+              <div class="dropdown-menu-item" onclick="showToast('info','Archive clicked'); closeDropdowns()">📦 Archive</div>
+              <div class="context-menu-divider"></div>
+              <div class="dropdown-menu-item" style="color:var(--error)" onclick="showToast('error','Delete clicked'); closeDropdowns()">🗑 Delete</div>
+            </div>
+          </div>
+          <div class="dropdown">
+            <button class="btn btn-secondary" onclick="toggleDropdown('dd-sort')">Sort By ▾</button>
+            <div class="dropdown-menu" id="dd-sort">
+              <div class="dropdown-menu-item" onclick="showToast('info','Sort by Name'); closeDropdowns()">Name</div>
+              <div class="dropdown-menu-item" onclick="showToast('info','Sort by Date'); closeDropdowns()">Date</div>
+              <div class="dropdown-menu-item" onclick="showToast('info','Sort by Price'); closeDropdowns()">Price</div>
+              <div class="dropdown-menu-item" onclick="showToast('info','Sort by Rating'); closeDropdowns()">Rating</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 17. FILE UPLOAD -->
+      <div class="section">
+        <div class="section-header" onclick="toggleSection(this)">
+          <h2>File Upload</h2><span class="badge">drag & drop</span>
+        </div>
+        <div class="section-body">
+          <div class="file-drop" id="file-drop" onclick="document.getElementById('file-input').click()">
+            <div class="icon">📁</div>
+            <p>Drag & drop files here or click to browse</p>
+            <span style="font-size:0.7rem; color:var(--text-muted)">Supports: images, PDFs, docs (max 10MB)</span>
+            <input type="file" id="file-input" multiple hidden onchange="handleFiles(this.files)">
+          </div>
+          <div class="file-list" id="file-list"></div>
+        </div>
+      </div>
+
+      <!-- 18. CONFIRMATION DIALOG -->
+      <div class="section">
+        <div class="section-header" onclick="toggleSection(this)">
+          <h2>Confirmation Dialog</h2><span class="badge">action</span>
+        </div>
+        <div class="section-body flex-row">
+          <button class="btn btn-danger" onclick="showConfirm('Delete this item?','This action is permanent and cannot be undone.',()=>showToast('error','Item deleted!'))">Delete with Confirm</button>
+          <button class="btn btn-warning" onclick="showConfirm('Reset all data?','All progress will be lost.',()=>showToast('warning','Data reset!'))">Reset with Confirm</button>
+        </div>
+      </div>
+
+    </div><!-- /sections -->
+
+    <!-- Toast container -->
+    <div id="toast-container"></div>
+
+    <!-- Modal 1 -->
+    <div class="modal-overlay" id="modal-1">
+      <div class="modal">
+        <div class="modal-header"><h3>Modal Window</h3><button class="close-btn" onclick="closeModal('modal-1')">×</button></div>
+        <div class="modal-body">
+          <p>This is a standard modal dialog. You can place any content here.</p>
+          <div style="margin-top:0.75rem"><label for="modal-input">Enter something:</label><input type="text" id="modal-input" placeholder="Type here..."></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="closeModal('modal-1')">Cancel</button>
+          <button class="btn btn-primary" onclick="openModal('modal-stacked')">Open Stacked Modal</button>
+          <button class="btn btn-success" onclick="showToast('success','Modal saved!'); closeModal('modal-1')">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal stacked -->
+    <div class="modal-overlay stacked" id="modal-stacked">
+      <div class="modal">
+        <div class="modal-header"><h3>Stacked Modal</h3><button class="close-btn" onclick="closeModal('modal-stacked')">×</button></div>
+        <div class="modal-body"><p>This is a stacked modal on top of the first one. Useful for confirmations or sub-flows.</p></div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="closeModal('modal-stacked')">Close</button>
+          <button class="btn btn-primary" onclick="showToast('info','Confirmed from stacked modal!'); closeModal('modal-stacked')">Confirm</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal-overlay" id="modal-edit">
+      <div class="modal">
+        <div class="modal-header"><h3>Edit Item</h3><button class="close-btn" onclick="closeModal('modal-edit')">×</button></div>
+        <div class="modal-body">
+          <div class="flex-col">
+            <div><label for="edit-name">Name</label><input type="text" id="edit-name" placeholder="Item name"></div>
+            <div><label for="edit-price">Price</label><input type="number" id="edit-price" placeholder="0.00" step="0.01"></div>
+            <div><label for="edit-category">Category</label>
+              <select id="edit-category"><option value="pizza">Pizza</option><option value="salad">Salad</option><option value="sides">Sides</option><option value="drinks">Drinks</option><option value="dessert">Dessert</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="closeModal('modal-edit')">Cancel</button>
+          <button class="btn btn-success" onclick="showToast('success','Item updated!'); closeModal('modal-edit')">Save Changes</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirm dialog -->
+    <div class="confirm-overlay" id="confirm-dialog">
+      <div class="confirm-box">
+        <h3 id="confirm-title">Are you sure?</h3>
+        <p id="confirm-message">This action cannot be undone.</p>
+        <div class="confirm-actions">
+          <button class="btn btn-secondary" onclick="closeConfirm()">Cancel</button>
+          <button class="btn btn-danger" id="confirm-ok" onclick="confirmAction()">Confirm</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Context menu -->
+    <div class="context-menu" id="context-menu">
+      <div class="context-menu-item" onclick="showToast('info','Copy'); hideContextMenu()">📋 Copy</div>
+      <div class="context-menu-item" onclick="showToast('info','Paste'); hideContextMenu()">📎 Paste</div>
+      <div class="context-menu-item" onclick="showToast('info','Cut'); hideContextMenu()">✂️ Cut</div>
+      <div class="context-menu-divider"></div>
+      <div class="context-menu-item" onclick="showToast('info','Select All'); hideContextMenu()">☑️ Select All</div>
+      <div class="context-menu-item" onclick="showToast('info','Inspect'); hideContextMenu()">🔍 Inspect</div>
+    </div>
+
+    <!-- Log panel -->
+    <div class="log-panel">
+      <div class="log-header"><span>Tool Invocation Log</span><button onclick="clearLog()">Clear</button></div>
+      <div id="log" class="log-entries"><div class="log-empty">Waiting for tool invocations...</div></div>
+    </div>
+
+    <footer>WebMCP UI Gauntlet — Ser.vi QA — Requires Chrome Canary 146+ with WebMCP flag enabled</footer>
+  </div>
+
+  <script type="module">
+    // =========================================================================
+    // Polyfill (disabled — using native navigator.modelContext)
+    // =========================================================================
+    try { await import('https://esm.sh/@mcp-b/global'); } catch(e) {
+      console.warn('Polyfill skipped:', e.message);
+    }
+
+    // =========================================================================
+    // Logging
+    // =========================================================================
+    const logEl = document.getElementById('log');
+    const statusEl = document.getElementById('status');
+
+    function ts() { return new Date().toLocaleTimeString('en-US', { hour12: false }); }
+    function log(type, msg) {
+      const empty = logEl.querySelector('.log-empty');
+      if (empty) empty.remove();
+      const el = document.createElement('div');
+      el.className = `log-entry ${type}`;
+      el.innerHTML = `<span class="ts">${ts()}</span>${msg}`;
+      logEl.appendChild(el);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+    window.clearLog = () => { logEl.innerHTML = '<div class="log-empty">Waiting for tool invocations...</div>'; };
+
+    // =========================================================================
+    // Grid data
+    // =========================================================================
+    const gridData = [
+      { id: 1, name: 'Margherita Pizza', category: 'Pizza', price: 12.99, status: 'Active' },
+      { id: 2, name: 'Caesar Salad', category: 'Salad', price: 8.99, status: 'Active' },
+      { id: 3, name: 'Garlic Bread', category: 'Sides', price: 5.99, status: 'Active' },
+      { id: 4, name: 'Tiramisu', category: 'Dessert', price: 6.99, status: 'Active' },
+      { id: 5, name: 'Lemonade', category: 'Drinks', price: 3.49, status: 'Active' },
+      { id: 6, name: 'Pepperoni Pizza', category: 'Pizza', price: 14.99, status: 'Active' },
+      { id: 7, name: 'Greek Salad', category: 'Salad', price: 9.49, status: 'Draft' },
+      { id: 8, name: 'Mozzarella Sticks', category: 'Sides', price: 7.49, status: 'Active' },
+      { id: 9, name: 'Iced Tea', category: 'Drinks', price: 2.99, status: 'Draft' },
+      { id: 10, name: 'BBQ Chicken Pizza', category: 'Pizza', price: 15.99, status: 'Active' },
+      { id: 11, name: 'Bruschetta', category: 'Sides', price: 6.49, status: 'Active' },
+      { id: 12, name: 'Panna Cotta', category: 'Dessert', price: 7.99, status: 'Draft' },
+    ];
+    let gridPage = 1;
+    const gridPageSize = 5;
+    window.gridData = gridData;
+
+    function renderGrid() {
+      const body = document.getElementById('grid-body');
+      const start = (gridPage - 1) * gridPageSize;
+      const page = gridData.slice(start, start + gridPageSize);
+      body.innerHTML = page.map(r => `
+        <tr>
+          <td>${r.id}</td><td>${r.name}</td><td>${r.category}</td>
+          <td>$${r.price.toFixed(2)}</td>
+          <td><span style="color:${r.status==='Active'?'var(--success)':'var(--text-muted)'}">${r.status}</span></td>
+          <td class="actions">
+            <button class="btn btn-secondary btn-sm btn-icon" title="View" onclick="showToast('info','Viewing: ${r.name}')">👁</button>
+            <button class="btn btn-warning btn-sm btn-icon" title="Edit" onclick="editGridItem(${r.id})">✏️</button>
+            <button class="btn btn-danger btn-sm btn-icon" title="Delete" onclick="deleteGridItem(${r.id})">🗑</button>
+          </td>
+        </tr>`).join('');
+      renderPagination();
+    }
+
+    function renderPagination() {
+      const total = Math.ceil(gridData.length / gridPageSize);
+      const pgEl = document.getElementById('grid-pagination');
+      let html = `<button class="page-btn" onclick="goPage(${gridPage-1})" ${gridPage<=1?'disabled':''}>‹</button>`;
+      for (let i = 1; i <= total; i++) {
+        html += `<button class="page-btn ${i===gridPage?'active':''}" onclick="goPage(${i})">${i}</button>`;
+      }
+      html += `<button class="page-btn" onclick="goPage(${gridPage+1})" ${gridPage>=total?'disabled':''}>›</button>`;
+      pgEl.innerHTML = html;
+    }
+
+    window.goPage = (p) => { const total = Math.ceil(gridData.length / gridPageSize); if (p >= 1 && p <= total) { gridPage = p; renderGrid(); } };
+    window.editGridItem = (id) => { const item = gridData.find(r=>r.id===id); if (!item) return; document.getElementById('edit-name').value=item.name; document.getElementById('edit-price').value=item.price; openModal('modal-edit'); };
+    window.deleteGridItem = (id) => { const item = gridData.find(r=>r.id===id); if (!item) return; showConfirm(`Delete "${item.name}"?`, 'This item will be removed from the grid.', () => { const idx = gridData.findIndex(r=>r.id===id); if (idx>-1) { gridData.splice(idx,1); renderGrid(); showToast('error', `Deleted: ${item.name}`); } }); };
+    window.addGridItem = () => { const id = Math.max(...gridData.map(r=>r.id))+1; gridData.push({ id, name: `New Item ${id}`, category: 'Sides', price: 9.99, status: 'Draft' }); renderGrid(); showToast('success', `Added new item #${id}`); };
+
+    // =========================================================================
+    // Autocomplete data
+    // =========================================================================
+    const menuItems = ['Margherita Pizza','Pepperoni Pizza','BBQ Chicken Pizza','Caesar Salad','Greek Salad','Garlic Bread','Mozzarella Sticks','Bruschetta','Tiramisu','Panna Cotta','Lemonade','Iced Tea','Espresso','Cappuccino','Mineral Water'];
+
+    window.handleAutocomplete = (val) => {
+      const list = document.getElementById('autocomplete-list');
+      if (!val.trim()) { list.classList.remove('open'); list.innerHTML=''; return; }
+      const matches = menuItems.filter(i => i.toLowerCase().includes(val.toLowerCase()));
+      if (matches.length === 0) { list.classList.remove('open'); list.innerHTML=''; return; }
+      list.innerHTML = matches.map(m => `<div class="autocomplete-item" onclick="selectAutocomplete('${m}')">${m}</div>`).join('');
+      list.classList.add('open');
+    };
+    window.selectAutocomplete = (val) => { document.getElementById('search-auto').value = val; document.getElementById('autocomplete-list').classList.remove('open'); showToast('info', `Selected: ${val}`); };
+
+    // =========================================================================
+    // Stepper
+    // =========================================================================
+    let currentStep = 1;
+    const totalSteps = 3;
+    const stepNames = ['Base', 'Sauce', 'Confirm'];
+
+    function renderStepper() {
+      const bar = document.getElementById('stepper-bar');
+      let html = '';
+      for (let i = 1; i <= totalSteps; i++) {
+        const cls = i < currentStep ? 'completed' : i === currentStep ? 'active' : '';
+        html += `<div class="step-indicator ${cls}"><span class="step-num">${i < currentStep ? '✓' : i}</span> ${stepNames[i-1]}</div>`;
+        if (i < totalSteps) html += `<div class="step-line ${i < currentStep ? 'completed' : ''}"></div>`;
+      }
+      bar.innerHTML = html;
+      document.querySelectorAll('.step-content').forEach((el, idx) => { el.classList.toggle('active', idx === currentStep - 1); });
+      document.getElementById('step-prev').disabled = currentStep <= 1;
+      document.getElementById('step-next').textContent = currentStep >= totalSteps ? 'Finish ✓' : 'Next →';
+      if (currentStep === 3) {
+        const base = document.querySelector('input[name="base"]:checked')?.value || 'classic';
+        const sauce = document.querySelector('input[name="sauce"]:checked')?.value || 'tomato';
+        document.getElementById('wizard-summary').textContent = `Base: ${base}, Sauce: ${sauce} — Ready to order!`;
+      }
+    }
+
+    window.stepperNav = (dir) => {
+      if (currentStep >= totalSteps && dir > 0) { showToast('success', 'Order placed!'); return; }
+      currentStep = Math.min(totalSteps, Math.max(1, currentStep + dir));
+      renderStepper();
+    };
+
+    // =========================================================================
+    // UI interaction functions
+    // =========================================================================
+    window.toggleSection = (header) => { header.nextElementSibling.classList.toggle('collapsed'); };
+    window.switchTab = (id, btn) => {
+      btn.closest('.tab-bar').querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      btn.closest('.section-body').querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    };
+    window.toggleAccordion = (trigger) => {
+      trigger.classList.toggle('open');
+      trigger.nextElementSibling.classList.toggle('open');
+    };
+    window.showToast = (type, msg) => {
+      const container = document.getElementById('toast-container');
+      const el = document.createElement('div');
+      el.className = `toast toast-${type}`;
+      el.textContent = msg;
+      container.appendChild(el);
+      setTimeout(() => el.remove(), 3000);
+    };
+    window.openModal = (id) => { document.getElementById(id).classList.add('active'); };
+    window.closeModal = (id) => { document.getElementById(id).classList.remove('active'); };
+
+    let confirmCb = null;
+    window.showConfirm = (title, msg, cb) => {
+      document.getElementById('confirm-title').textContent = title;
+      document.getElementById('confirm-message').textContent = msg;
+      confirmCb = cb;
+      document.getElementById('confirm-dialog').classList.add('active');
+    };
+    window.closeConfirm = () => { document.getElementById('confirm-dialog').classList.remove('active'); confirmCb = null; };
+    window.confirmAction = () => { if (confirmCb) confirmCb(); closeConfirm(); };
+
+    window.showContextMenu = (e) => {
+      e.preventDefault();
+      const menu = document.getElementById('context-menu');
+      menu.style.left = e.clientX + 'px';
+      menu.style.top = e.clientY + 'px';
+      menu.classList.add('open');
+    };
+    window.hideContextMenu = () => { document.getElementById('context-menu').classList.remove('open'); };
+    document.addEventListener('click', (e) => { hideContextMenu(); closeDropdowns(); });
+
+    window.toggleDropdown = (id) => {
+      event.stopPropagation();
+      const el = document.getElementById(id);
+      const wasOpen = el.classList.contains('open');
+      closeDropdowns();
+      if (!wasOpen) el.classList.add('open');
+    };
+    window.closeDropdowns = () => { document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('open')); };
+
+    window.handleFiles = (files) => {
+      const list = document.getElementById('file-list');
+      Array.from(files).forEach(f => {
+        const item = document.createElement('div');
+        item.className = 'file-item';
+        item.innerHTML = `<span>📄 ${f.name} (${(f.size/1024).toFixed(1)}KB)</span><button class="btn btn-danger btn-sm" onclick="this.parentElement.remove(); showToast('error','File removed')">×</button>`;
+        list.appendChild(item);
+      });
+      showToast('success', `${files.length} file(s) added`);
+    };
+
+    // File drop zone
+    const dropZone = document.getElementById('file-drop');
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('dragover'); });
+    dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); handleFiles(e.dataTransfer.files); });
+
+    // Drag and drop reorder
+    const dragList = document.getElementById('drag-list');
+    let dragItem = null;
+    dragList.addEventListener('dragstart', (e) => { dragItem = e.target.closest('.drag-item'); if (dragItem) dragItem.classList.add('dragging'); });
+    dragList.addEventListener('dragend', () => { if (dragItem) dragItem.classList.remove('dragging'); document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over')); dragItem = null; });
+    dragList.addEventListener('dragover', (e) => { e.preventDefault(); const target = e.target.closest('.drag-item'); if (target && target !== dragItem) { target.classList.add('drag-over'); } });
+    dragList.addEventListener('dragleave', (e) => { const target = e.target.closest('.drag-item'); if (target) target.classList.remove('drag-over'); });
+    dragList.addEventListener('drop', (e) => {
+      const target = e.target.closest('.drag-item');
+      if (target && dragItem && target !== dragItem) {
+        const items = [...dragList.children];
+        const fromIdx = items.indexOf(dragItem);
+        const toIdx = items.indexOf(target);
+        if (fromIdx < toIdx) target.after(dragItem); else target.before(dragItem);
+      }
+      document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+    });
+
+    // Submit handlers
+    window.submitTextInputs = () => {
+      const data = { name: document.getElementById('inp-name').value, email: document.getElementById('inp-email').value, quantity: document.getElementById('inp-number').value, date: document.getElementById('inp-date').value, message: document.getElementById('inp-textarea').value };
+      showToast('success', 'Text inputs submitted!');
+      log('result', `Text inputs: ${JSON.stringify(data)}`);
+    };
+    window.submitSelects = () => {
+      const single = document.getElementById('sel-single').value;
+      const multi = Array.from(document.getElementById('sel-multi').selectedOptions).map(o=>o.value);
+      const grouped = document.getElementById('sel-grouped').value;
+      showToast('success', 'Selections submitted!');
+      log('result', `Selects: single=${single}, multi=[${multi}], grouped=${grouped}`);
+    };
+    window.submitCheckRadio = () => {
+      const checks = Array.from(document.querySelectorAll('#chk-group input:checked')).map(c=>c.value);
+      const radio = document.querySelector('#radio-group input:checked')?.value;
+      showToast('success', 'Choices submitted!');
+      log('result', `Checkboxes: [${checks}], Radio: ${radio}`);
+    };
+
+    // =========================================================================
+    // WebMCP Tool Registration
+    // =========================================================================
+    const toolDefs = [
+      {
+        name: 'fill_text_fields',
+        description: 'Fill in text input fields and textarea on the page. Accepts any combination of name, email, quantity, date, and message.',
+        inputSchema: { type: 'object', properties: { name: { type: 'string' }, email: { type: 'string' }, quantity: { type: 'number' }, date: { type: 'string', description: 'YYYY-MM-DD format' }, message: { type: 'string' } } },
+        async execute(args) {
+          if (args.name !== undefined) document.getElementById('inp-name').value = args.name;
+          if (args.email !== undefined) document.getElementById('inp-email').value = args.email;
+          if (args.quantity !== undefined) document.getElementById('inp-number').value = args.quantity;
+          if (args.date !== undefined) document.getElementById('inp-date').value = args.date;
+          if (args.message !== undefined) document.getElementById('inp-textarea').value = args.message;
+          return { content: [{ type: 'text', text: JSON.stringify({ filled: args }) }] };
+        }
+      },
+      {
+        name: 'set_select',
+        description: 'Set select dropdown values. Use selectId: "sel-single", "sel-multi", or "sel-grouped".',
+        inputSchema: { type: 'object', properties: { selectId: { type: 'string' }, value: { type: 'string', description: 'For single select. Use | to select multiple for sel-multi.' } }, required: ['selectId', 'value'] },
+        async execute({ selectId, value }) {
+          const el = document.getElementById(selectId);
+          if (!el) return { content: [{ type: 'text', text: JSON.stringify({ error: 'Select not found' }) }] };
+          if (el.multiple) {
+            const vals = value.split('|');
+            Array.from(el.options).forEach(o => { o.selected = vals.includes(o.value); });
+          } else { el.value = value; }
+          return { content: [{ type: 'text', text: `Set ${selectId} to: ${value}` }] };
+        }
+      },
+      {
+        name: 'set_checkboxes',
+        description: 'Check or uncheck topping checkboxes. Values: cheese, bacon, mushrooms, jalapeños, pineapple.',
+        inputSchema: { type: 'object', properties: { checked: { type: 'array', items: { type: 'string' }, description: 'Toppings to check' }, unchecked: { type: 'array', items: { type: 'string' }, description: 'Toppings to uncheck' } } },
+        async execute({ checked = [], unchecked = [] }) {
+          document.querySelectorAll('#chk-group input').forEach(inp => {
+            if (checked.includes(inp.value)) inp.checked = true;
+            if (unchecked.includes(inp.value)) inp.checked = false;
+          });
+          const current = Array.from(document.querySelectorAll('#chk-group input:checked')).map(c=>c.value);
+          return { content: [{ type: 'text', text: JSON.stringify({ checkedToppings: current }) }] };
+        }
+      },
+      {
+        name: 'set_radio',
+        description: 'Set the size radio button. Values: small, medium, large, xl.',
+        inputSchema: { type: 'object', properties: { value: { type: 'string' } }, required: ['value'] },
+        async execute({ value }) {
+          const inp = document.querySelector(`#radio-group input[value="${value}"]`);
+          if (inp) inp.checked = true;
+          return { content: [{ type: 'text', text: `Size set to: ${value}` }] };
+        }
+      },
+      {
+        name: 'set_toggle',
+        description: 'Set a toggle switch. IDs: tgl-notifications, tgl-darkmode, tgl-sound.',
+        inputSchema: { type: 'object', properties: { toggleId: { type: 'string' }, enabled: { type: 'boolean' } }, required: ['toggleId', 'enabled'] },
+        async execute({ toggleId, enabled }) {
+          const el = document.getElementById(toggleId);
+          if (el) el.checked = enabled;
+          if (toggleId === 'tgl-darkmode') document.documentElement.setAttribute('data-theme', enabled ? 'dark' : 'light');
+          return { content: [{ type: 'text', text: `${toggleId} set to ${enabled}` }] };
+        }
+      },
+      {
+        name: 'set_range',
+        description: 'Set the spice level range slider. Value: 0-10.',
+        inputSchema: { type: 'object', properties: { value: { type: 'number', minimum: 0, maximum: 10 } }, required: ['value'] },
+        async execute({ value }) {
+          document.getElementById('range-spice').value = value;
+          document.getElementById('range-val').textContent = value;
+          return { content: [{ type: 'text', text: `Spice level set to ${value}` }] };
+        }
+      },
+      {
+        name: 'switch_tab',
+        description: 'Switch to a tab. Values: tab-overview, tab-details, tab-reviews.',
+        inputSchema: { type: 'object', properties: { tabId: { type: 'string' } }, required: ['tabId'] },
+        async execute({ tabId }) {
+          const panel = document.getElementById(tabId);
+          if (!panel) return { content: [{ type: 'text', text: 'Tab not found' }] };
+          panel.closest('.section-body').querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+          panel.classList.add('active');
+          panel.closest('.section-body').querySelectorAll('.tab-btn').forEach(b => { b.classList.toggle('active', b.textContent.toLowerCase().includes(tabId.replace('tab-',''))); });
+          return { content: [{ type: 'text', text: panel.textContent.trim() }] };
+        }
+      },
+      {
+        name: 'grid_action',
+        description: 'Perform actions on the data grid: view, edit, delete an item by ID, add a new item, or go to a page.',
+        inputSchema: { type: 'object', properties: { action: { type: 'string', enum: ['view','edit','delete','add','go_page'] }, itemId: { type: 'number' }, page: { type: 'number' } }, required: ['action'] },
+        async execute({ action, itemId, page }) {
+          if (action === 'view') { const item = gridData.find(r=>r.id===itemId); return { content: [{ type: 'text', text: item ? JSON.stringify(item) : 'Not found' }] }; }
+          if (action === 'delete') { const idx = gridData.findIndex(r=>r.id===itemId); if (idx>-1) { const name = gridData[idx].name; gridData.splice(idx,1); renderGrid(); return { content: [{ type: 'text', text: `Deleted: ${name}` }] }; } return { content: [{ type: 'text', text: 'Not found' }] }; }
+          if (action === 'add') { const id = Math.max(...gridData.map(r=>r.id))+1; gridData.push({ id, name:`New Item ${id}`, category:'Sides', price:9.99, status:'Draft' }); renderGrid(); return { content: [{ type: 'text', text: `Added item #${id}` }] }; }
+          if (action === 'go_page') { window.goPage(page); return { content: [{ type: 'text', text: `Navigated to page ${page}` }] }; }
+          return { content: [{ type: 'text', text: `Unknown action: ${action}` }] };
+        }
+      },
+      {
+        name: 'show_toast',
+        description: 'Show a toast notification. Types: success, error, warning, info.',
+        inputSchema: { type: 'object', properties: { type: { type: 'string', enum: ['success','error','warning','info'] }, message: { type: 'string' } }, required: ['type', 'message'] },
+        async execute({ type, message }) { showToast(type, message); return { content: [{ type: 'text', text: `Toast shown: [${type}] ${message}` }] }; }
+      },
+      {
+        name: 'dismiss_alert',
+        description: 'Dismiss an alert by type: info, success, warning, error.',
+        inputSchema: { type: 'object', properties: { type: { type: 'string', enum: ['info','success','warning','error'] } }, required: ['type'] },
+        async execute({ type }) {
+          const alert = document.querySelector(`.alert-${type}`);
+          if (alert) { alert.remove(); return { content: [{ type: 'text', text: `Dismissed ${type} alert` }] }; }
+          return { content: [{ type: 'text', text: `No ${type} alert found` }] };
+        }
+      },
+      {
+        name: 'open_modal',
+        description: 'Open a modal. IDs: modal-1 (general), modal-stacked (stacked on top), modal-edit (edit form).',
+        inputSchema: { type: 'object', properties: { modalId: { type: 'string' } }, required: ['modalId'] },
+        async execute({ modalId }) { openModal(modalId); return { content: [{ type: 'text', text: `Opened modal: ${modalId}` }] }; }
+      },
+      {
+        name: 'close_modal',
+        description: 'Close a modal by ID.',
+        inputSchema: { type: 'object', properties: { modalId: { type: 'string' } }, required: ['modalId'] },
+        async execute({ modalId }) { closeModal(modalId); return { content: [{ type: 'text', text: `Closed modal: ${modalId}` }] }; }
+      },
+      {
+        name: 'toggle_accordion',
+        description: 'Toggle an accordion section by index (0, 1, or 2).',
+        inputSchema: { type: 'object', properties: { index: { type: 'number' } }, required: ['index'] },
+        async execute({ index }) {
+          const triggers = document.querySelectorAll('.accordion-trigger');
+          if (triggers[index]) { triggers[index].click(); const isOpen = triggers[index].classList.contains('open'); return { content: [{ type: 'text', text: `Accordion ${index} is now ${isOpen ? 'open' : 'closed'}` }] }; }
+          return { content: [{ type: 'text', text: 'Accordion not found' }] };
+        }
+      },
+      {
+        name: 'search_autocomplete',
+        description: 'Type in the search/autocomplete field and return matching suggestions.',
+        inputSchema: { type: 'object', properties: { query: { type: 'string' } }, required: ['query'] },
+        async execute({ query }) {
+          document.getElementById('search-auto').value = query;
+          const matches = menuItems.filter(i => i.toLowerCase().includes(query.toLowerCase()));
+          handleAutocomplete(query);
+          return { content: [{ type: 'text', text: JSON.stringify({ query, matches }) }] };
+        }
+      },
+      {
+        name: 'wizard_navigate',
+        description: 'Navigate the multi-step wizard. Actions: next, prev, or go_to step number (1-3).',
+        inputSchema: { type: 'object', properties: { action: { type: 'string', enum: ['next', 'prev', 'go_to'] }, step: { type: 'number' } }, required: ['action'] },
+        async execute({ action, step }) {
+          if (action === 'next') stepperNav(1);
+          else if (action === 'prev') stepperNav(-1);
+          else if (action === 'go_to' && step) { currentStep = Math.min(totalSteps, Math.max(1, step)); renderStepper(); }
+          return { content: [{ type: 'text', text: `Wizard is now on step ${currentStep}: ${stepNames[currentStep-1]}` }] };
+        }
+      },
+      {
+        name: 'get_page_state',
+        description: 'Get the full current state of all form elements and UI components on the page.',
+        inputSchema: { type: 'object', properties: {} },
+        async execute() {
+          const state = {
+            textInputs: { name: document.getElementById('inp-name').value, email: document.getElementById('inp-email').value, quantity: document.getElementById('inp-number').value, date: document.getElementById('inp-date').value, message: document.getElementById('inp-textarea').value },
+            selects: { single: document.getElementById('sel-single').value, multi: Array.from(document.getElementById('sel-multi').selectedOptions).map(o=>o.value), grouped: document.getElementById('sel-grouped').value },
+            checkboxes: Array.from(document.querySelectorAll('#chk-group input:checked')).map(c=>c.value),
+            radio: document.querySelector('#radio-group input:checked')?.value,
+            toggles: { notifications: document.getElementById('tgl-notifications').checked, darkmode: document.getElementById('tgl-darkmode').checked, sound: document.getElementById('tgl-sound').checked },
+            spiceLevel: parseInt(document.getElementById('range-spice').value),
+            activeTab: document.querySelector('.tab-panel.active')?.id,
+            gridItems: gridData.length,
+            gridPage: gridPage,
+            wizardStep: currentStep,
+            theme: document.documentElement.getAttribute('data-theme'),
+            alertsVisible: document.querySelectorAll('.alert').length
+          };
+          return { content: [{ type: 'text', text: JSON.stringify(state, null, 2) }] };
+        }
+      }
+    ];
+
+    // =========================================================================
+    // Register all tools
+    // =========================================================================
+    let toolRegistry = {};
+
+    async function registerTools() {
+      if (!('modelContext' in navigator)) {
+        statusEl.className = 'status-badge error';
+        statusEl.innerHTML = '<div class="status-dot"></div><span>WebMCP Unavailable</span>';
+        log('error', 'navigator.modelContext not found. Enable WebMCP flag in chrome://flags');
+        return;
+      }
+      statusEl.className = 'status-badge';
+      statusEl.innerHTML = '<div class="status-dot"></div><span>WebMCP Active</span>';
+      log('result', 'navigator.modelContext detected — registering tools...');
+
+      for (const tool of toolDefs) {
+        try {
+          const origExec = tool.execute;
+          navigator.modelContext.registerTool({
+            ...tool,
+            async execute(args) {
+              log('call', `CALL ${tool.name}(${JSON.stringify(args)})`);
+              try {
+                const result = await origExec(args);
+                const text = result.content.map(c => c.text).join('\n');
+                log('result', `  OK ${text}`);
+                return result;
+              } catch (err) {
+                log('error', `  ERR ${err.message}`);
+                throw err;
+              }
+            }
+          });
+          toolRegistry[tool.name] = tool;
+          log('result', `Registered: ${tool.name}`);
+        } catch (err) {
+          log('error', `Failed: ${tool.name} — ${err.message}`);
+        }
+      }
+      log('result', `All ${Object.keys(toolRegistry).length} tools registered. Ready for AI agent discovery.`);
+    }
+
+    // Init
+    renderGrid();
+    renderStepper();
+    registerTools();
+  </script>
+</body>
+</html>
