@@ -1,0 +1,8 @@
+﻿{
+  "name": "webmcp-test",
+  "version": "1.0.0",
+  "description": "WebMCP tool showcase for testing end-to-end AI agent integration",
+  "private": true,
+  "scripts": { "start": "npx serve ." },
+  "dependencies": { "@mcp-b/global": "latest" }
+}

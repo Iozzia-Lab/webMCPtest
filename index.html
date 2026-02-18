@@ -1,0 +1,390 @@
+﻿<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebMCP Test Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1><span>WebMCP</span> Test Dashboard</h1>
+      <div id="status" class="status-badge error">
+        <div class="status-dot"></div>
+        <span>Checking...</span>
+      </div>
+    </header>
+
+    <div class="tools-grid">
+      <div class="tool-card" id="card-greet_user">
+        <h3>greet_user</h3>
+        <p>Takes a name and returns a personalized greeting. Simplest tool to verify the pipeline works.</p>
+        <div class="params">{ name: string }</div>
+        <button onclick="testTool('greet_user', { name: 'Sal' })">Test: greet "Sal"</button>
+      </div>
+
+      <div class="tool-card" id="card-search_items">
+        <h3>search_items</h3>
+        <p>Search a mock product catalog by keyword. Tests string input with JSON array output.</p>
+        <div class="params">{ query: string, category?: string }</div>
+        <button onclick="testTool('search_items', { query: 'pizza' })">Test: search "pizza"</button>
+      </div>
+
+      <div class="tool-card" id="card-toggle_theme">
+        <h3>toggle_theme</h3>
+        <p>Switch page between light and dark mode. Tests a tool with visible DOM side effects.</p>
+        <div class="params">{ theme?: "light" | "dark" }</div>
+        <button onclick="testTool('toggle_theme', {})">Test: toggle theme</button>
+      </div>
+
+      <div class="tool-card" id="card-get_page_stats">
+        <h3>get_page_stats</h3>
+        <p>Returns current page state: element count, scroll position, theme, registered tools. No inputs required.</p>
+        <div class="params">{ }</div>
+        <button onclick="testTool('get_page_stats', {})">Test: get stats</button>
+      </div>
+
+      <div class="tool-card" id="card-submit_form">
+        <h3>submit_form</h3>
+        <p>Accepts name, email, and message fields. Tests multi-field validation and structured input.</p>
+        <div class="params">{ name: string, email: string, message: string }</div>
+        <button onclick="testTool('submit_form', { name: 'Sal', email: 'sal@ser.vi', message: 'Testing WebMCP' })">Test: submit form</button>
+      </div>
+
+      <div class="tool-card" id="card-calculate">
+        <h3>calculate</h3>
+        <p>Evaluates a math expression and returns the result. Tests error handling for invalid input.</p>
+        <div class="params">{ expression: string }</div>
+        <button onclick="testTool('calculate', { expression: '(12 + 8) * 3' })">Test: (12 + 8) * 3</button>
+      </div>
+    </div>
+
+    <div class="log-panel">
+      <div class="log-header">
+        <span>Tool Invocation Log</span>
+        <button onclick="clearLog()">Clear</button>
+      </div>
+      <div id="log" class="log-entries">
+        <div class="log-empty">Waiting for tool invocations...</div>
+      </div>
+    </div>
+
+    <footer>
+      WebMCP Test Dashboard &mdash; Ser.vi QA &mdash; Requires Chrome Canary 146+ with WebMCP flag enabled
+    </footer>
+  </div>
+
+  <script type="module">
+    // =========================================================================
+    // @mcp-b/global polyfill — provides navigator.modelContext
+    // =========================================================================
+    import 'https://esm.sh/@mcp-b/global';
+
+    // =========================================================================
+    // Logging helpers
+    // =========================================================================
+    const logEl = document.getElementById('log');
+    const statusEl = document.getElementById('status');
+    let toolRegistry = {};
+
+    function timestamp() {
+      return new Date().toLocaleTimeString('en-US', { hour12: false });
+    }
+
+    function log(type, message) {
+      const empty = logEl.querySelector('.log-empty');
+      if (empty) empty.remove();
+
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      entry.innerHTML = `<span class="timestamp">${timestamp()}</span>${message}`;
+      logEl.appendChild(entry);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    window.clearLog = function() {
+      logEl.innerHTML = '<div class="log-empty">Waiting for tool invocations...</div>';
+    };
+
+    // =========================================================================
+    // Manual test button handler
+    // =========================================================================
+    window.testTool = async function(toolName, args) {
+      const tool = toolRegistry[toolName];
+      if (!tool) {
+        log('error', `Tool "${toolName}" not found in registry`);
+        return;
+      }
+
+      const card = document.getElementById(`card-${toolName}`);
+      card.classList.add('invoked');
+      setTimeout(() => card.classList.remove('invoked'), 1500);
+
+      log('call', `CALL ${toolName}(${JSON.stringify(args)})`);
+
+      try {
+        const result = await tool.execute(args);
+        const text = result.content.map(c => c.text).join('\n');
+        log('result', `  OK ${text}`);
+      } catch (err) {
+        log('error', `  ERR ${err.message}`);
+      }
+    };
+
+    // =========================================================================
+    // WebMCP status check
+    // =========================================================================
+    function updateStatus(ok) {
+      if (ok) {
+        statusEl.className = 'status-badge';
+        statusEl.innerHTML = '<div class="status-dot"></div><span>WebMCP Active</span>';
+        log('result', 'navigator.modelContext detected — registering tools...');
+      } else {
+        statusEl.className = 'status-badge error';
+        statusEl.innerHTML = '<div class="status-dot"></div><span>WebMCP Unavailable</span>';
+        log('error', 'navigator.modelContext not found. Enable the WebMCP flag in chrome://flags');
+      }
+    }
+
+    // =========================================================================
+    // Mock data
+    // =========================================================================
+    const CATALOG = [
+      { id: 1, name: 'Margherita Pizza', category: 'pizza', price: 12.99 },
+      { id: 2, name: 'Pepperoni Pizza', category: 'pizza', price: 14.99 },
+      { id: 3, name: 'Caesar Salad', category: 'salad', price: 8.99 },
+      { id: 4, name: 'Greek Salad', category: 'salad', price: 9.49 },
+      { id: 5, name: 'Garlic Bread', category: 'sides', price: 5.99 },
+      { id: 6, name: 'Mozzarella Sticks', category: 'sides', price: 7.49 },
+      { id: 7, name: 'Tiramisu', category: 'dessert', price: 6.99 },
+      { id: 8, name: 'Lemonade', category: 'drinks', price: 3.49 },
+      { id: 9, name: 'Iced Tea', category: 'drinks', price: 2.99 },
+      { id: 10, name: 'BBQ Chicken Pizza', category: 'pizza', price: 15.99 }
+    ];
+
+    const submissions = [];
+
+    // =========================================================================
+    // Tool definitions
+    // =========================================================================
+    const tools = [
+      {
+        name: 'greet_user',
+        description: 'Greet someone by name. Returns a personalized greeting message.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', description: 'The name of the person to greet' }
+          },
+          required: ['name']
+        },
+        async execute({ name }) {
+          const hour = new Date().getHours();
+          const timeOfDay = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
+          const greeting = `Good ${timeOfDay}, ${name}! Welcome to the WebMCP Test Dashboard.`;
+          return { content: [{ type: 'text', text: greeting }] };
+        }
+      },
+      {
+        name: 'search_items',
+        description: 'Search the mock product catalog by keyword and optional category. Returns matching items with name, category, and price.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            query: { type: 'string', description: 'Search keyword to match against product names' },
+            category: { type: 'string', description: 'Optional category filter: pizza, salad, sides, dessert, drinks' }
+          },
+          required: ['query']
+        },
+        async execute({ query, category }) {
+          let results = CATALOG.filter(item =>
+            item.name.toLowerCase().includes(query.toLowerCase())
+          );
+          if (category) {
+            results = results.filter(item => item.category === category.toLowerCase());
+          }
+          return {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({ query, category: category || 'all', resultCount: results.length, items: results }, null, 2)
+            }]
+          };
+        }
+      },
+      {
+        name: 'toggle_theme',
+        description: 'Toggle the page theme between light and dark mode. Optionally specify a theme directly. Returns the new active theme.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            theme: { type: 'string', description: 'Set a specific theme: "light" or "dark". Omit to toggle.' }
+          }
+        },
+        async execute({ theme }) {
+          const html = document.documentElement;
+          if (theme === 'light' || theme === 'dark') {
+            html.setAttribute('data-theme', theme);
+          } else {
+            const current = html.getAttribute('data-theme');
+            html.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+          }
+          const newTheme = html.getAttribute('data-theme');
+          return { content: [{ type: 'text', text: `Theme set to: ${newTheme}` }] };
+        }
+      },
+      {
+        name: 'get_page_stats',
+        description: 'Get current page statistics including DOM element count, scroll position, active theme, viewport size, and number of registered WebMCP tools.',
+        inputSchema: {
+          type: 'object',
+          properties: {}
+        },
+        async execute() {
+          const stats = {
+            title: document.title,
+            theme: document.documentElement.getAttribute('data-theme'),
+            elementCount: document.querySelectorAll('*').length,
+            scrollY: Math.round(window.scrollY),
+            viewportWidth: window.innerWidth,
+            viewportHeight: window.innerHeight,
+            registeredTools: Object.keys(toolRegistry).length,
+            toolNames: Object.keys(toolRegistry),
+            formSubmissions: submissions.length,
+            catalogSize: CATALOG.length
+          };
+          return { content: [{ type: 'text', text: JSON.stringify(stats, null, 2) }] };
+        }
+      },
+      {
+        name: 'submit_form',
+        description: 'Submit a contact/feedback form with name, email, and message. Validates all fields and stores the submission. Returns confirmation with submission ID.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', description: 'Full name of the person submitting' },
+            email: { type: 'string', description: 'Email address' },
+            message: { type: 'string', description: 'The message or feedback content' }
+          },
+          required: ['name', 'email', 'message']
+        },
+        async execute({ name, email, message }) {
+          const errors = [];
+          if (!name || name.trim().length === 0) errors.push('Name is required');
+          if (!email || !email.includes('@')) errors.push('Valid email is required');
+          if (!message || message.trim().length === 0) errors.push('Message is required');
+
+          if (errors.length > 0) {
+            return { content: [{ type: 'text', text: JSON.stringify({ success: false, errors }, null, 2) }] };
+          }
+
+          const submission = {
+            id: submissions.length + 1,
+            name: name.trim(),
+            email: email.trim(),
+            message: message.trim(),
+            timestamp: new Date().toISOString()
+          };
+          submissions.push(submission);
+
+          return {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({ success: true, submission }, null, 2)
+            }]
+          };
+        }
+      },
+      {
+        name: 'calculate',
+        description: 'Evaluate a math expression safely and return the numeric result. Supports basic arithmetic: +, -, *, /, parentheses, and common Math functions.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            expression: { type: 'string', description: 'Math expression to evaluate, e.g. "(12 + 8) * 3" or "Math.sqrt(144)"' }
+          },
+          required: ['expression']
+        },
+        async execute({ expression }) {
+          try {
+            const sanitized = expression.replace(/[^0-9+\-*/().%\s]|Math\.\w+/g, (match) => {
+              if (match.startsWith('Math.')) return match;
+              return '';
+            });
+
+            const result = new Function(`"use strict"; return (${expression})`)();
+
+            if (typeof result !== 'number' || !isFinite(result)) {
+              return { content: [{ type: 'text', text: JSON.stringify({ error: 'Expression did not produce a finite number', expression }) }] };
+            }
+
+            return {
+              content: [{
+                type: 'text',
+                text: JSON.stringify({ expression, result }, null, 2)
+              }]
+            };
+          } catch (err) {
+            return {
+              content: [{
+                type: 'text',
+                text: JSON.stringify({ error: err.message, expression }, null, 2)
+              }]
+            };
+          }
+        }
+      }
+    ];
+
+    // =========================================================================
+    // Register all tools with WebMCP
+    // =========================================================================
+    async function registerTools() {
+      if (!('modelContext' in navigator)) {
+        updateStatus(false);
+        return;
+      }
+
+      updateStatus(true);
+
+      for (const tool of tools) {
+        try {
+          const originalExecute = tool.execute;
+          const wrappedTool = {
+            ...tool,
+            async execute(args) {
+              const card = document.getElementById(`card-${tool.name}`);
+              if (card) {
+                card.classList.add('invoked');
+                setTimeout(() => card.classList.remove('invoked'), 1500);
+              }
+
+              log('call', `CALL ${tool.name}(${JSON.stringify(args)})`);
+              try {
+                const result = await originalExecute(args);
+                const text = result.content.map(c => c.text).join('\n');
+                log('result', `  OK ${text}`);
+                return result;
+              } catch (err) {
+                log('error', `  ERR ${err.message}`);
+                throw err;
+              }
+            }
+          };
+
+          navigator.modelContext.registerTool(wrappedTool);
+          toolRegistry[tool.name] = tool;
+          log('result', `Registered: ${tool.name}`);
+        } catch (err) {
+          log('error', `Failed to register ${tool.name}: ${err.message}`);
+        }
+      }
+
+      log('result', `All ${Object.keys(toolRegistry).length} tools registered. Ready for AI agent discovery.`);
+    }
+
+    // Kick it off
+    registerTools();
+  </script>
+</body>
+</html>
